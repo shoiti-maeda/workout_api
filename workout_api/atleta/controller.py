@@ -3,6 +3,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import UUID4
 
+
+
 from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate
 from workout_api.atleta.models import AtletaModel
 from workout_api.categorias.models import CategoriaModel
@@ -120,6 +122,49 @@ async def patch(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpda
     await db_session.refresh(atleta)
 
     return atleta
+
+
+# Nova Consulta
+@router.get(
+    '/nome/{nome}', 
+    summary='Consulta um Atleta pelo nome',
+    status_code=status.HTTP_200_OK,
+    response_model=AtletaOut,
+)
+async def get(nome:str, db_session: DatabaseDependency) -> AtletaOut:
+    atleta: AtletaOut = (
+        await db_session.execute(select(AtletaModel).filter_by(nome=nome))
+    ).scalars().first()
+
+    if not atleta:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f'Atleta não encontrado com nome: {nome}'
+        )
+    
+    return atleta
+
+@router.get(
+    '/cpf/{cpf}', 
+    summary='Consulta um Atleta pelo cpf',
+    status_code=status.HTTP_200_OK,
+    response_model=AtletaOut,
+)
+async def get(cpf:str, db_session: DatabaseDependency) -> AtletaOut:
+    atleta: AtletaOut = (
+        await db_session.execute(select(AtletaModel).filter_by(cpf=cpf))
+    ).scalars().first()
+
+    if not atleta:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f'Atleta não encontrado com o CPF: {cpf}'
+        )
+    
+    return atleta
+
+
+
 
 
 @router.delete(
