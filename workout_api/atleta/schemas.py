@@ -1,5 +1,5 @@
-from typing import Annotated, Optional
-from pydantic import Field, PositiveFloat
+from typing import Annotated, Optional,List
+from pydantic import Field, PositiveFloat,BaseModel
 from workout_api.categorias.schemas import CategoriaIn
 from workout_api.centro_treinamento.schemas import CentroTreinamentoAtleta
 
@@ -28,7 +28,6 @@ class AtletaCustomOut(BaseSchema):
     nome: str 
     centro_treinamento: str 
     categoria: str
-
 
 
 class AtletaUpdate(BaseSchema):

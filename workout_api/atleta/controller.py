@@ -1,25 +1,17 @@
 from datetime import datetime
 from uuid import uuid4
-from fastapi import APIRouter, Body, HTTPException, status
-from pydantic import UUID4,BaseModel
+from fastapi import APIRouter, Body, HTTPException, status, Query
+from pydantic import UUID4
 from typing import List
-
-
-
 from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate,AtletaCustomOut
 from workout_api.atleta.models import AtletaModel
 from workout_api.categorias.models import CategoriaModel
 from workout_api.centro_treinamento.models import CentroTreinamentoModel
-
 from workout_api.contrib.dependencies import DatabaseDependency
 from sqlalchemy.future import select
-
 from sqlalchemy.exc import IntegrityError
-from starlette.responses import RedirectResponse
 
-router = APIRouter()
-
-
+router = APIRouter() 
 
 @router.post(
     '/', 
@@ -77,30 +69,40 @@ async def post(
 
     return atleta_out
 
-
 @router.get(
     '/', 
     summary='Consultar todos os Atletas',
     status_code=status.HTTP_200_OK,
-   # response_model=list[AtletaOut],
-    response_model=list[AtletaCustomOut]
+    response_model=list[AtletaCustomOut],  
 )
-async def query(db_session: DatabaseDependency) -> list[AtletaOut]:
-    atletas: list[AtletaOut] = (await db_session.execute(select(AtletaModel))).scalars().all()
-    # lista_atletas=[AtletaOut.model_validate(atleta) for atleta in atletas]
-    # return lista_atletas
-    atletas_custom = []
-    for atleta in atletas:
-        valid_atleta = AtletaOut.model_validate(atleta)
-        atletas_custom.append(
-            AtletaCustomOut(
-                nome=valid_atleta.nome,
-                centro_treinamento=valid_atleta.centro_treinamento.nome,
-                categoria=valid_atleta.categoria.nome
-            )
-        )
-    return atletas_custom 
+async def query(
+    db_session: DatabaseDependency,
+    nome: str = Query(None, description="Filtrar por nome do atleta (null=Todos)"),
+    cpf: str = Query(None, description="Filtrar por CPF do atleta (null=Todos)"),
+    page: int = Query(1, description="Número da página.", ge=1),
+    size: int = Query(50, description="Quantidade de registros.", ge=1, le=100)
+) -> list[AtletaCustomOut]:
+    
+    query = select(AtletaModel)
+    if nome is not None:
+        query = query.where(AtletaModel.nome == nome)
+    if cpf is not None:
+        query = query.where(AtletaModel.cpf == cpf)
 
+    atletas = await db_session.execute(query)
+    atletas_response = [
+        AtletaCustomOut(
+            nome=atleta.nome,
+            centro_treinamento=atleta.centro_treinamento.nome,
+            categoria=atleta.categoria.nome
+        ) 
+        for atleta in atletas.scalars().all()
+    ]    
+    offset = (page - 1) * size
+    
+    paginated_data = atletas_response[offset:(offset + size)]
+
+    return paginated_data
 
 @router.get(
     '/{id}', 
@@ -120,7 +122,6 @@ async def get(id: UUID4, db_session: DatabaseDependency) -> AtletaOut:
         )
     
     return atleta
-
 
 @router.patch(
     '/{id}', 
@@ -147,49 +148,6 @@ async def patch(id: UUID4, db_session: DatabaseDependency, atleta_up: AtletaUpda
     await db_session.refresh(atleta)
 
     return atleta
-
-
-# Nova Consulta
-@router.get(
-    '/nome/{nome}', 
-    summary='Consulta um Atleta pelo nome',
-    status_code=status.HTTP_200_OK,
-    response_model=AtletaOut,
-)
-async def get(nome:str, db_session: DatabaseDependency) -> AtletaOut:
-    atleta: AtletaOut = (
-        await db_session.execute(select(AtletaModel).filter_by(nome=nome))
-    ).scalars().first()
-
-    if not atleta:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f'Atleta não encontrado com nome: {nome}'
-        )
-    
-    return atleta
-
-@router.get(
-    '/cpf/{cpf}', 
-    summary='Consulta um Atleta pelo cpf',
-    status_code=status.HTTP_200_OK,
-    response_model=AtletaOut,
-)
-async def get(cpf:str, db_session: DatabaseDependency) -> AtletaOut:
-    atleta: AtletaOut = (
-        await db_session.execute(select(AtletaModel).filter_by(cpf=cpf))
-    ).scalars().first()
-
-    if not atleta:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f'Atleta não encontrado com o CPF: {cpf}'
-        )
-    
-    return atleta
-
-
-
 
 
 @router.delete(
