@@ -1,11 +1,12 @@
 from datetime import datetime
 from uuid import uuid4
 from fastapi import APIRouter, Body, HTTPException, status
-from pydantic import UUID4
+from pydantic import UUID4,BaseModel
+from typing import List
 
 
 
-from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate
+from workout_api.atleta.schemas import AtletaIn, AtletaOut, AtletaUpdate,AtletaCustomOut
 from workout_api.atleta.models import AtletaModel
 from workout_api.categorias.models import CategoriaModel
 from workout_api.centro_treinamento.models import CentroTreinamentoModel
@@ -65,16 +66,29 @@ async def post(
     return atleta_out
 
 
+
 @router.get(
     '/', 
     summary='Consultar todos os Atletas',
     status_code=status.HTTP_200_OK,
-    response_model=list[AtletaOut],
+   # response_model=list[AtletaOut],
+    response_model=list[AtletaCustomOut]
 )
 async def query(db_session: DatabaseDependency) -> list[AtletaOut]:
     atletas: list[AtletaOut] = (await db_session.execute(select(AtletaModel))).scalars().all()
-    
-    return [AtletaOut.model_validate(atleta) for atleta in atletas]
+    # lista_atletas=[AtletaOut.model_validate(atleta) for atleta in atletas]
+    # return lista_atletas
+    atletas_custom = []
+    for atleta in atletas:
+        valid_atleta = AtletaOut.model_validate(atleta)
+        atletas_custom.append(
+            AtletaCustomOut(
+                nome=valid_atleta.nome,
+                centro_treinamento=valid_atleta.centro_treinamento.nome,
+                categoria=valid_atleta.categoria.nome
+            )
+        )
+    return atletas_custom 
 
 
 @router.get(
