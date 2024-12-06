@@ -14,7 +14,12 @@ from workout_api.centro_treinamento.models import CentroTreinamentoModel
 from workout_api.contrib.dependencies import DatabaseDependency
 from sqlalchemy.future import select
 
+from sqlalchemy.exc import IntegrityError
+from starlette.responses import RedirectResponse
+
 router = APIRouter()
+
+
 
 @router.post(
     '/', 
@@ -49,7 +54,7 @@ async def post(
             detail=f'O centro de treinamento {centro_treinamento_nome} não foi encontrado.'
         )
     try:
-        atleta_out = AtletaOut(id=uuid4(), created_at=datetime.utcnow(), **atleta_in.model_dump())
+        atleta_out = AtletaOut(id=uuid4(), created_at=datetime.now(), **atleta_in.model_dump())
         atleta_model = AtletaModel(**atleta_out.model_dump(exclude={'categoria', 'centro_treinamento'}))
 
         atleta_model.categoria_id = categoria.pk_id
@@ -57,14 +62,20 @@ async def post(
         
         db_session.add(atleta_model)
         await db_session.commit()
-    except Exception:
+        
+    except IntegrityError as e:
+        await db_session.rollback()  # Reverter a transação em caso de erro
+        if 'cpf' in str(e.orig):
+            raise HTTPException(
+                status_code=status.HTTP_303_SEE_OTHER,
+                detail=f"Já existe um atleta cadastrado com o cpf: {atleta_in.cpf}"
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail='Ocorreu um erro ao inserir os dados no banco'
         )
 
     return atleta_out
-
 
 
 @router.get(
