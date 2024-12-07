@@ -9,7 +9,7 @@ Código assíncrono apenas significa que a linguagem tem um jeito de dizer para 
 # Projeto
 ## WorkoutAPI
 
-Esta é uma API de competição de crossfit chamada WorkoutAPI (isso mesmo rs, eu acabei unificando duas coisas que gosto: codar e treinar). É uma API pequena, devido a ser um projeto mais hands-on e simplificado nós desenvolveremos uma API de poucas tabelas, mas com o necessário para você aprender como utilizar o FastAPI.
+Esta é uma API de competição de crossfit chamada WorkoutAPI. É uma API pequena, devido a ser um projeto mais hands-on e simplificado feito no bootcamp da DIO em parceria com a VIVO com o intuito de aprender como utilizar o FastAPI.
 
 ## Modelagem de entidade e relacionamento - MER
 ![MER](/mer.jpg "Modelagem de entidade e relacionamento")
@@ -19,6 +19,7 @@ Esta é uma API de competição de crossfit chamada WorkoutAPI (isso mesmo rs, e
 A API foi desenvolvida utilizando o `fastapi` (async), junto das seguintes libs: `alembic`, `SQLAlchemy`, `pydantic`. Para salvar os dados está sendo utilizando o `postgres`, por meio do `docker`.
 
 ## Execução da API
+O código principal foi desenvolvido com essas instruções:
 
 Para executar o projeto, utilizei a [pyenv](https://github.com/pyenv/pyenv), com a versão 3.11.4 do `python` para o ambiente virtual.
 
@@ -45,6 +46,7 @@ Para criar o banco de dados, execute:
 ```bash
 make run-migrations
 ```
+Eu utilizei python 3.13.0 e  versões de dependencias do requirements.txt.
 
 ## API
 
@@ -54,7 +56,7 @@ make run
 ```
 e acesse: http://127.0.0.1:8000/docs
 
-# Desafio Final
+# Desafio Final ** Concluído 99,9%**
     - adicionar query parameters nos endpoints
         - atleta
             - nome
@@ -68,7 +70,7 @@ e acesse: http://127.0.0.1:8000/docs
     - Manipular exceção de integridade dos dados em cada módulo/tabela
         - sqlalchemy.exc.IntegrityError e devolver a seguinte mensagem: “Já existe um atleta cadastrado com o cpf: x”
         - status_code: 303
-    - Adicionar paginação utilizando a lib: fastapi-pagination
+    - Adicionar paginação  ̶u̶t̶i̶l̶i̶z̶a̶n̶d̶o̶ ̶a̶ ̶l̶i̶b̶:̶ ̶f̶a̶s̶t̶a̶p̶i̶-̶p̶a̶g̶i̶n̶a̶t̶i̶o̶n̶
         - limit e offset
 # Referências
 
